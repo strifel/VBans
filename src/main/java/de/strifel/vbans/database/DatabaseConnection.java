@@ -3,6 +3,8 @@ package de.strifel.vbans.database;
 import com.velocitypowered.api.proxy.Player;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @SuppressWarnings("SqlResolve")
@@ -15,6 +17,8 @@ public class DatabaseConnection {
     private static final String UPDATE_USERNAME = "UPDATE ban_nameCache SET username=? WHERE user=?";
     private static final String GET_USERNAME = "SELECT username FROM ban_nameCache WHERE user=? LIMIT 1";
     private static final String GET_UUID = "SELECT user FROM ban_nameCache WHERE username=? LIMIT 1";
+    private static final String PURGE_BANS = "UPDATE ban_bans SET purged=? WHERE purged IS NULL and (until = -1 or until > ?) and user = ?";
+    private static final String GET_USERNAMES_BASE = "SELECT username FROM ban_bans INNER JOIN ban_nameCache ON ban_bans.user = ban_nameCache.user WHERE GROUP BY username";
 
     public DatabaseConnection(String server, int port, String username, String password, String database) throws ClassNotFoundException, SQLException {
         synchronized (this) {
@@ -92,4 +96,22 @@ public class DatabaseConnection {
     }
 
 
+    public void purgeActiveBans(String userUUID, String purgerUUID) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(PURGE_BANS);
+        statement.setString(1, purgerUUID);
+        statement.setLong(2, System.currentTimeMillis() / 1000);
+        statement.setString(3, userUUID);
+        statement.executeUpdate();
+    }
+
+    public List<String> getUsernamesByQuery(String query) throws SQLException {
+        ResultSet results = connection.createStatement().executeQuery(GET_USERNAMES_BASE.replace("WHERE", query));
+        List<String> usernames = new ArrayList<>();
+        if (results.next()) {
+            do {
+                usernames.add(results.getString("username"));
+            } while(results.next());
+        }
+        return usernames;
+    }
 }

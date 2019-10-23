@@ -11,6 +11,7 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import de.strifel.vbans.commands.CommandBan;
 import de.strifel.vbans.commands.CommandKick;
+import de.strifel.vbans.commands.CommandPurgeBan;
 import de.strifel.vbans.commands.CommandTempBan;
 import de.strifel.vbans.database.Ban;
 import de.strifel.vbans.database.DatabaseConnection;
@@ -75,6 +76,7 @@ public class VBans {
         server.getCommandManager().register(new CommandKick(server, databaseConnection), "kick", "vkick");
         server.getCommandManager().register(new CommandBan(server, databaseConnection), "ban", "vban");
         server.getCommandManager().register(new CommandTempBan(server, databaseConnection), "tban", "tempban", "vtempban", "vtban");
+        server.getCommandManager().register(new CommandPurgeBan(server, databaseConnection), "pban", "vpurgeban", "purgeban", "delban");
     }
 
     @Subscribe
