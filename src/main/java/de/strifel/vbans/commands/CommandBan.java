@@ -29,14 +29,14 @@ public class CommandBan implements Command {
 
     public void execute(CommandSource commandSource, @NonNull String[] strings) {
         if (strings.length > 0) {
+            String reason = "The Ban Hammer has spoken!";
+            if  (strings.length > 1 && commandSource.hasPermission("VBans.ban.reason")) {
+                reason = String.join(" ", Arrays.copyOfRange(strings, 1, strings.length));
+            }
             Optional<Player> oPlayer = server.getPlayer(strings[0]);
             if (oPlayer.isPresent()) {
                 Player player = oPlayer.get();
                 if (!player.hasPermission("VBans.prevent") || commandSource instanceof ConsoleCommandSource) {
-                    String reason = "The Ban Hammer has spoken!";
-                    if  (strings.length > 1 && commandSource.hasPermission("VBans.ban.reason")) {
-                        reason = String.join(" ", Arrays.copyOfRange(strings, 1, strings.length));
-                    }
                     player.disconnect(Util.formatBannedMessage(commandSource instanceof ConsoleCommandSource ? "Console" : ((Player)commandSource).getUsername(), reason, -1));
                     try {
                         database.addBan(player.getUniqueId().toString(), -1, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString(), reason);
@@ -50,7 +50,17 @@ public class CommandBan implements Command {
                     commandSource.sendMessage(TextComponent.of("You are not allowed to ban this player!").color(TextColor.RED));
                 }
             } else {
-                commandSource.sendMessage(TextComponent.of("Player not found!").color(TextColor.RED));
+                try {
+                    String uuid = database.getUUID(strings[0]);
+                    if (uuid != null) {
+                        database.addBan(uuid, -1, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString(), reason);
+                        commandSource.sendMessage(TextComponent.of("You banned " + strings[0]).color(TextColor.YELLOW));
+                    } else {
+                        commandSource.sendMessage(TextComponent.of("Player not found!").color(TextColor.RED));
+                    }
+                } catch (SQLException e) {
+                    commandSource.sendMessage(TextComponent.of("An database issue occurred!").color(TextColor.RED));
+                }
             }
         } else {
             commandSource.sendMessage(TextComponent.of("Usage: /ban <player> [reason]").color(TextColor.RED));

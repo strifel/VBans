@@ -28,41 +28,42 @@ public class CommandTempBan implements Command {
 
     public void execute(CommandSource commandSource, @NonNull String[] strings) {
         if (strings.length > 1) {
+            long duration;
+            {
+                String durationString = strings[1];
+                if (Util.isInt(durationString)) {
+                    duration = 60 * 60 * 24 * Integer.parseInt(durationString);
+                } else if (durationString.endsWith("d")) {
+                    durationString = durationString.replace("d", "");
+                    if (!Util.isInt(durationString)) return;
+                    duration = 60 * 60 * 24 * Integer.parseInt(durationString);
+                } else if (durationString.endsWith("h")) {
+                    durationString = durationString.replace("h", "");
+                    if (!Util.isInt(durationString)) return;
+                    duration = 60 * 60 * Integer.parseInt(durationString);
+                } else if (durationString.endsWith("m")) {
+                    durationString = durationString.replace("m", "");
+                    if (!Util.isInt(durationString)) return;
+                    duration = 60 * Integer.parseInt(durationString);
+                } else if (durationString.endsWith("s")) {
+                    durationString = durationString.replace("s", "");
+                    if (!Util.isInt(durationString)) return;
+                    duration = Integer.parseInt(durationString);
+                } else {
+                    commandSource.sendMessage(TextComponent.of("Time could not be read use d,h,m or s as suffix for time!").color(TextColor.RED));
+                    return;
+                }
+            }
+            long end = (System.currentTimeMillis() / 1000) + duration;
+            String reason = "The ban hammer has spoken!";
+            if  (strings.length > 2 && commandSource.hasPermission("VBans.temp.reason")) {
+                reason = String.join(" ", Arrays.copyOfRange(strings, 2, strings.length));
+            }
             Optional<Player> oPlayer = server.getPlayer(strings[0]);
             if (oPlayer.isPresent()) {
                 Player player = oPlayer.get();
                 if (!player.hasPermission("VBans.prevent") || commandSource instanceof ConsoleCommandSource) {
-                    long duration;
-                    {
-                        String durationString = strings[1];
-                        if (Util.isInt(durationString)) {
-                            duration = 60 * 60 * 24 * Integer.parseInt(durationString);
-                        } else if (durationString.endsWith("d")) {
-                            durationString = durationString.replace("d", "");
-                            if (!Util.isInt(durationString)) return;
-                            duration = 60 * 60 * 24 * Integer.parseInt(durationString);
-                        } else if (durationString.endsWith("h")) {
-                            durationString = durationString.replace("h", "");
-                            if (!Util.isInt(durationString)) return;
-                            duration = 60 * 60 * Integer.parseInt(durationString);
-                        } else if (durationString.endsWith("m")) {
-                            durationString = durationString.replace("m", "");
-                            if (!Util.isInt(durationString)) return;
-                            duration = 60 * Integer.parseInt(durationString);
-                        } else if (durationString.endsWith("s")) {
-                            durationString = durationString.replace("s", "");
-                            if (!Util.isInt(durationString)) return;
-                            duration = Integer.parseInt(durationString);
-                        } else {
-                            commandSource.sendMessage(TextComponent.of("Time could not be read use d,h,m or s as suffix for time!").color(TextColor.RED));
-                            return;
-                        }
-                    }
-                    long end = (System.currentTimeMillis() / 1000) + duration;
-                    String reason = "You are being kicked!";
-                    if  (strings.length > 2 && commandSource.hasPermission("VBans.temp.reason")) {
-                        reason = String.join(" ", Arrays.copyOfRange(strings, 2, strings.length));
-                    }
+
                     player.disconnect(Util.formatBannedMessage(commandSource instanceof ConsoleCommandSource ? "Console" : ((Player)commandSource).getUsername(), reason, end));
                     try {
                         database.addBan(player.getUniqueId().toString(), end, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString(), reason);
@@ -76,7 +77,17 @@ public class CommandTempBan implements Command {
                     commandSource.sendMessage(TextComponent.of("You are not allowed to Ban this player!").color(TextColor.RED));
                 }
             } else {
-                commandSource.sendMessage(TextComponent.of("Player not found!").color(TextColor.RED));
+                try {
+                    String uuid = database.getUUID(strings[0]);
+                    if (uuid != null) {
+                        database.addBan(uuid, end, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString(), reason);
+                        commandSource.sendMessage(TextComponent.of("You banned " + strings[0] + " for " + duration + " seconds!").color(TextColor.YELLOW));
+                    } else {
+                        commandSource.sendMessage(TextComponent.of("Player not found!").color(TextColor.RED));
+                    }
+                } catch (SQLException e) {
+                    commandSource.sendMessage(TextComponent.of("An database issue occurred!").color(TextColor.RED));
+                }
             }
         } else {
             commandSource.sendMessage(TextComponent.of("Usage: /tempban <player> <time> [reason]").color(TextColor.RED));

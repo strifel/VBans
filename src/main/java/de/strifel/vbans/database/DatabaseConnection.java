@@ -14,6 +14,7 @@ public class DatabaseConnection {
     private static final String SET_USERNAME = "INSERT INTO ban_nameCache (user, username) VALUES (?, ?)";
     private static final String UPDATE_USERNAME = "UPDATE ban_nameCache SET username=? WHERE user=?";
     private static final String GET_USERNAME = "SELECT username FROM ban_nameCache WHERE user=? LIMIT 1";
+    private static final String GET_UUID = "SELECT user FROM ban_nameCache WHERE username=? LIMIT 1";
 
     public DatabaseConnection(String server, int port, String username, String password, String database) throws ClassNotFoundException, SQLException {
         synchronized (this) {
@@ -45,7 +46,7 @@ public class DatabaseConnection {
         }
     }
 
-    public String getUsername(String userUUID) throws SQLException {
+    String getUsername(String userUUID) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(GET_USERNAME);
         statement.setString(1, userUUID);
         ResultSet result = statement.executeQuery();
@@ -54,6 +55,19 @@ public class DatabaseConnection {
         } else {
             return null;
         }
+    }
+
+
+    public String getUUID(String username) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(GET_UUID);
+        statement.setString(1, username);
+        ResultSet result = statement.executeQuery();
+        if (result.next()) {
+            return result.getString("user");
+        } else {
+            return null;
+        }
+
     }
 
     public void setUsername(String userUUID, String username) throws SQLException {
