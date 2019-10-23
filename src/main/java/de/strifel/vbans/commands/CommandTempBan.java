@@ -6,10 +6,12 @@ import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import de.strifel.vbans.Util;
+import de.strifel.vbans.database.DatabaseConnection;
 import net.kyori.text.TextComponent;
 import net.kyori.text.format.TextColor;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,9 +19,11 @@ import java.util.Optional;
 
 public class CommandTempBan implements Command {
     private final ProxyServer server;
+    private final DatabaseConnection database;
 
-    public CommandTempBan(ProxyServer server) {
+    public CommandTempBan(ProxyServer server, DatabaseConnection databaseConnection) {
         this.server = server;
+        database = databaseConnection;
     }
 
     public void execute(CommandSource commandSource, @NonNull String[] strings) {
@@ -48,7 +52,7 @@ public class CommandTempBan implements Command {
                         } else if (durationString.endsWith("s")) {
                             durationString = durationString.replace("s", "");
                             if (!Util.isInt(durationString)) return;
-                            duration = 60 * Integer.parseInt(durationString);
+                            duration = Integer.parseInt(durationString);
                         } else {
                             commandSource.sendMessage(TextComponent.of("Time could not be read use d,h,m or s as suffix for time!").color(TextColor.RED));
                             return;
@@ -60,6 +64,13 @@ public class CommandTempBan implements Command {
                         reason = String.join(" ", Arrays.copyOfRange(strings, 2, strings.length));
                     }
                     player.disconnect(Util.formatBannedMessage(commandSource instanceof ConsoleCommandSource ? "Console" : ((Player)commandSource).getUsername(), reason, end));
+                    try {
+                        database.addBan(player.getUniqueId().toString(), end, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString(), reason);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                        commandSource.sendMessage(TextComponent.of("Your ban can not be registered.").color(TextColor.RED));
+                        return;
+                    }
                     commandSource.sendMessage(TextComponent.of("You banned " + strings[0] + " for " + duration + " seconds!").color(TextColor.YELLOW));
                 } else {
                     commandSource.sendMessage(TextComponent.of("You are not allowed to Ban this player!").color(TextColor.RED));

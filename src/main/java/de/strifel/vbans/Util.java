@@ -2,6 +2,7 @@ package de.strifel.vbans;
 
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import de.strifel.vbans.database.Ban;
 import net.kyori.text.TextComponent;
 
 
@@ -27,6 +28,9 @@ public class Util {
         return TextComponent.of(BAN_TEMPLATE.replace("$bannedUntil", bannedUntil).replace("$reason", reason).replace("$bannedBy", bannedBy));
     }
 
+    public static TextComponent formatBannedMessage(Ban ban, VBans vbans) {
+        return formatBannedMessage(ban.getBannedByUsername(vbans), ban.getReason(), ban.getUntil());
+    }
     public static boolean isInt(String str) {
         try {
             Integer.parseInt(str);
