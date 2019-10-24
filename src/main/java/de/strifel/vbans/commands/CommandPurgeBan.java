@@ -46,7 +46,7 @@ public class CommandPurgeBan implements Command {
     @Override
     public List<String> suggest(CommandSource source, @NonNull String[] currentArgs) {
         try {
-            return database.getUsernamesByQuery("WHERE purged IS NULL and (until = -1 or until > " + (System.currentTimeMillis() / 1000) + ")");
+            return database.getUsernamesByQuery(DatabaseConnection.BANED_CRITERIA.replace("?", (System.currentTimeMillis() / 1000) + ""));
         } catch (SQLException e) {
             return new ArrayList<>();
         }

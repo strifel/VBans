@@ -28,31 +28,10 @@ public class CommandTempBan implements Command {
 
     public void execute(CommandSource commandSource, @NonNull String[] strings) {
         if (strings.length > 1) {
-            long duration;
-            {
-                String durationString = strings[1];
-                if (Util.isInt(durationString)) {
-                    duration = 60 * 60 * 24 * Integer.parseInt(durationString);
-                } else if (durationString.endsWith("d")) {
-                    durationString = durationString.replace("d", "");
-                    if (!Util.isInt(durationString)) return;
-                    duration = 60 * 60 * 24 * Integer.parseInt(durationString);
-                } else if (durationString.endsWith("h")) {
-                    durationString = durationString.replace("h", "");
-                    if (!Util.isInt(durationString)) return;
-                    duration = 60 * 60 * Integer.parseInt(durationString);
-                } else if (durationString.endsWith("m")) {
-                    durationString = durationString.replace("m", "");
-                    if (!Util.isInt(durationString)) return;
-                    duration = 60 * Integer.parseInt(durationString);
-                } else if (durationString.endsWith("s")) {
-                    durationString = durationString.replace("s", "");
-                    if (!Util.isInt(durationString)) return;
-                    duration = Integer.parseInt(durationString);
-                } else {
-                    commandSource.sendMessage(TextComponent.of("Time could not be read use d,h,m or s as suffix for time!").color(TextColor.RED));
-                    return;
-                }
+            long duration = getBanDuration(strings[1]);
+            if (duration == 0) {
+                commandSource.sendMessage(TextComponent.of("Invalid duration! Us d, m, h or s as suffix for time!").color(TextColor.RED));
+                return;
             }
             long end = (System.currentTimeMillis() / 1000) + duration;
             String reason = "The ban hammer has spoken!";
@@ -106,6 +85,30 @@ public class CommandTempBan implements Command {
 
     public boolean hasPermission(CommandSource source, @NonNull String[] args) {
         return source.hasPermission("VBans.temp");
+    }
+
+    public static long getBanDuration(String durationString) {
+        if (Util.isInt(durationString)) {
+            return 60 * 60 * 24 * Integer.parseInt(durationString);
+        } else if (durationString.endsWith("d")) {
+            durationString = durationString.replace("d", "");
+            if (!Util.isInt(durationString)) return 0;
+            return 60 * 60 * 24 * Integer.parseInt(durationString);
+        } else if (durationString.endsWith("h")) {
+            durationString = durationString.replace("h", "");
+            if (!Util.isInt(durationString)) return 0;
+            return 60 * 60 * Integer.parseInt(durationString);
+        } else if (durationString.endsWith("m")) {
+            durationString = durationString.replace("m", "");
+            if (!Util.isInt(durationString)) return 0;
+            return 60 * Integer.parseInt(durationString);
+        } else if (durationString.endsWith("s")) {
+            durationString = durationString.replace("s", "");
+            if (!Util.isInt(durationString)) return 0;
+            return Integer.parseInt(durationString);
+        } else {
+            return 0;
+        }
     }
 
 }
