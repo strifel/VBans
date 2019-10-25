@@ -14,6 +14,7 @@ public class DatabaseConnection {
 
     private static final String INSERT_BAN = "INSERT INTO ban_bans (user, until, bannedBy, reason, issuedAt) VALUES (?, ?, ?, ?, ?)";
     private static final String IS_BANNED = "SELECT reason, until, bannedBy, reducedUntil, issuedAt FROM ban_bans WHERE " + BANED_CRITERIA + " and user = ? LIMIT 1";
+    private static final String GET_BAN_HISTORY = "SELECT reason, until, bannedBy, reducedUntil, issuedAt, purged, reducedBy  FROM ban_bans WHERE user = ?";
     private static final String SET_USERNAME = "INSERT INTO ban_nameCache (user, username) VALUES (?, ?)";
     private static final String UPDATE_USERNAME = "UPDATE ban_nameCache SET username=? WHERE user=?";
     private static final String GET_USERNAME = "SELECT username FROM ban_nameCache WHERE user=? LIMIT 1";
@@ -51,6 +52,19 @@ public class DatabaseConnection {
         } else {
             return null;
         }
+    }
+
+    public ArrayList<HistoryBan> getBanHistory(String userUUID, boolean includePurged) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(GET_BAN_HISTORY + (includePurged ? "" : " AND PURGED IS NULL"));
+        statement.setString(1, userUUID);
+        ResultSet result = statement.executeQuery();
+        ArrayList<HistoryBan> bans = new ArrayList<>();
+        if (result.next()) {
+            do {
+                bans.add(new HistoryBan(userUUID, result.getString("bannedBy"), result.getString("reason"), result.getLong("until"), result.getLong("issuedAt"), result.getLong("reducedUntil"), result.getString("purged"), result.getString("reducedBy")));
+            } while (result.next());
+        }
+        return bans;
     }
 
     String getUsername(String userUUID) throws SQLException {

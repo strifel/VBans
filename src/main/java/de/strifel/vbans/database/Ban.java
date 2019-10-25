@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 public class Ban {
     private String player, by, reason;
-    private long until, bannedAt, reducedUntil;
+    long until, bannedAt, reducedUntil;
 
     Ban(String player, String by, String reason, long until, long bannedAt, long reducedUntil) {
         this.player = player;
@@ -16,6 +16,7 @@ public class Ban {
         this.bannedAt = bannedAt;
         this.reducedUntil = reducedUntil;
     }
+
 
     public String getUsername(VBans vbans) {
         try {

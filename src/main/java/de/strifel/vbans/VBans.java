@@ -75,6 +75,7 @@ public class VBans {
         server.getCommandManager().register(new CommandTempBan(server, databaseConnection), "tban", "tempban", "vtempban", "vtban");
         server.getCommandManager().register(new CommandPurgeBan(server, databaseConnection), "pban", "vpurgeban", "purgeban", "delban");
         server.getCommandManager().register(new CommandReduce(this), "reduceBan", "rban", "unban", "pardon");
+        server.getCommandManager().register(new CommandBanHistory(server, this), "banhistory", "bhistory", "bhist", "banh");
     }
 
     @Subscribe
