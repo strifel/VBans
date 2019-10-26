@@ -66,7 +66,7 @@ public class CommandBanHistory implements Command {
 
     private TextComponent generateBanText(HistoryBan ban) {
         TextComponent banText =
-                TextComponent.of(DATE_FORMAT.format(ban.getBannedAt() * 1000) + ": ")
+                TextComponent.of("#" + ban.getId() + " " + DATE_FORMAT.format(ban.getBannedAt() * 1000) + ": ")
                 .append(TextComponent.of("\"" + ban.getReason() + "\"").decoration(TextDecoration.BOLD, TextDecoration.State.TRUE))
                 .append(TextComponent.of(" by "))
                 .append(TextComponent.of(ban.getBannedByUsername(vbans)))

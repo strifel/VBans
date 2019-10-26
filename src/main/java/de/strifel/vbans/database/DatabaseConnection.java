@@ -13,13 +13,14 @@ public class DatabaseConnection {
     public static final String BANED_CRITERIA = "purged IS NULL and ((reducedUntil is NULL and (until = -1 or until > ?)) or (reducedUntil = -1 or reducedUntil > ?))";
 
     private static final String INSERT_BAN = "INSERT INTO ban_bans (user, until, bannedBy, reason, issuedAt) VALUES (?, ?, ?, ?, ?)";
-    private static final String IS_BANNED = "SELECT reason, until, bannedBy, reducedUntil, issuedAt FROM ban_bans WHERE " + BANED_CRITERIA + " and user = ? LIMIT 1";
-    private static final String GET_BAN_HISTORY = "SELECT reason, until, bannedBy, reducedUntil, issuedAt, purged, reducedBy  FROM ban_bans WHERE user = ?";
+    private static final String GET_BAN = "SELECT id, reason, until, bannedBy, reducedUntil, issuedAt FROM ban_bans WHERE " + BANED_CRITERIA + " and user = ? LIMIT 1";
+    private static final String GET_BAN_HISTORY = "SELECT id, reason, until, bannedBy, reducedUntil, issuedAt, purged, reducedBy  FROM ban_bans WHERE user = ?";
     private static final String SET_USERNAME = "INSERT INTO ban_nameCache (user, username) VALUES (?, ?)";
     private static final String UPDATE_USERNAME = "UPDATE ban_nameCache SET username=? WHERE user=?";
     private static final String GET_USERNAME = "SELECT username FROM ban_nameCache WHERE user=? LIMIT 1";
     private static final String GET_UUID = "SELECT user FROM ban_nameCache WHERE username=? LIMIT 1";
     private static final String PURGE_BANS = "UPDATE ban_bans SET purged=? WHERE " + BANED_CRITERIA + " and user = ?";
+    private static final String PURGE_BAN = "UPDATE ban_bans SET purged=? WHERE user = ? AND id=?";
     private static final String REDUCE_BANS = "UPDATE ban_bans SET reducedUntil=?, reducedBy=?, reducedAt=? WHERE " + BANED_CRITERIA + " AND user=?";
     private static final String GET_USERNAMES_BASE = "SELECT username FROM ban_bans INNER JOIN ban_nameCache ON ban_bans.user = ban_nameCache.user WHERE GROUP BY username";
 
@@ -42,13 +43,13 @@ public class DatabaseConnection {
     }
 
     public Ban getBan(String userUUID) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(IS_BANNED);
+        PreparedStatement statement = connection.prepareStatement(GET_BAN);
         statement.setLong(1, System.currentTimeMillis() / 1000);
         statement.setLong(2, System.currentTimeMillis() / 1000);
         statement.setString(3, userUUID);
         ResultSet result = statement.executeQuery();
         if (result.next()) {
-            return new Ban(userUUID, result.getString("bannedBy"), result.getString("reason"), result.getLong("until"), result.getLong("issuedAt"), result.getLong("reducedUntil"));
+            return new Ban(result.getLong("id"), userUUID, result.getString("bannedBy"), result.getString("reason"), result.getLong("until"), result.getLong("issuedAt"), result.getLong("reducedUntil"));
         } else {
             return null;
         }
@@ -61,7 +62,7 @@ public class DatabaseConnection {
         ArrayList<HistoryBan> bans = new ArrayList<>();
         if (result.next()) {
             do {
-                bans.add(new HistoryBan(userUUID, result.getString("bannedBy"), result.getString("reason"), result.getLong("until"), result.getLong("issuedAt"), result.getLong("reducedUntil"), result.getString("purged"), result.getString("reducedBy")));
+                bans.add(new HistoryBan(result.getLong("id"), userUUID, result.getString("bannedBy"), result.getString("reason"), result.getLong("until"), result.getLong("issuedAt"), result.getLong("reducedUntil"), result.getString("purged"), result.getString("reducedBy")));
             } while (result.next());
         }
         return bans;
@@ -119,6 +120,14 @@ public class DatabaseConnection {
         statement.setLong(2, System.currentTimeMillis() / 1000);
         statement.setLong(3, System.currentTimeMillis() / 1000);
         statement.setString(4, userUUID);
+        statement.executeUpdate();
+    }
+
+    public void purgeBanById(String userUUID, String purgerUUID, int id) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(PURGE_BAN);
+        statement.setString(1, purgerUUID);
+        statement.setString(2, userUUID);
+        statement.setInt(3, id);
         statement.executeUpdate();
     }
 

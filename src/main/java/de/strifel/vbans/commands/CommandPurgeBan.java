@@ -25,21 +25,31 @@ public class CommandPurgeBan implements Command {
 
     @Override
     public void execute(CommandSource commandSource, @NonNull String[] strings) {
-        if (strings.length == 1) {
+        if (strings.length >= 1 && strings.length <=2) {
             try {
                 String uuid = database.getUUID(strings[0]);
-                if (uuid != null && database.getBan(uuid) != null) {
-                    database.purgeActiveBans(uuid, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString());
-                    commandSource.sendMessage(TextComponent.of("All active bans for " + strings[0] + " are deleted and will not affect his history anymore!").color(TextColor.YELLOW));
+                if (uuid != null && (database.getBan(uuid) != null || strings.length == 2)) {
+                    if (strings.length == 1) {
+                        database.purgeActiveBans(uuid, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString());
+                        commandSource.sendMessage(TextComponent.of("All active bans for " + strings[0] + " are deleted and will not affect his history anymore!").color(TextColor.YELLOW));
+                    } else {
+                        try {
+                            int id = Integer.parseInt(strings[1]);
+                            database.purgeBanById(uuid, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString(), id);
+                            commandSource.sendMessage(TextComponent.of("The ban for " + strings[0] + " with the id " + id + " is deleted and will not affect the players history anymore!").color(TextColor.YELLOW));
+                        } catch (NumberFormatException e) {
+                            commandSource.sendMessage(TextComponent.of("Please enter a valid id!").color(TextColor.RED));
+                        }
+                    }
                 } else {
-                    commandSource.sendMessage(TextComponent.of("This Player is not banned!").color(TextColor.RED));
+                    commandSource.sendMessage(TextComponent.of("This Player is not banned or does not exists!").color(TextColor.RED));
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
                 commandSource.sendMessage(TextComponent.of("An database error occurred!").color(TextColor.RED));
             }
         } else {
-            commandSource.sendMessage(TextComponent.of("Usage: /delban <username>").color(TextColor.RED));
+            commandSource.sendMessage(TextComponent.of("Usage: /delban <username> [id]").color(TextColor.RED));
         }
     }
 

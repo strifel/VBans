@@ -7,8 +7,8 @@ import java.sql.SQLException;
 public class HistoryBan extends Ban{
     private final String purgedBy, reducedBy;
 
-    HistoryBan(String player, String by, String reason, long until, long bannedAt, long reducedUntil, String purgedBy, String reducedBy) {
-        super(player, by, reason, until, bannedAt, reducedUntil);
+    HistoryBan(long id, String player, String by, String reason, long until, long bannedAt, long reducedUntil, String purgedBy, String reducedBy) {
+        super(id, player, by, reason, until, bannedAt, reducedUntil);
         this.purgedBy = purgedBy;
         this.reducedBy = reducedBy;
     }

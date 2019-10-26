@@ -6,15 +6,16 @@ import java.sql.SQLException;
 
 public class Ban {
     private String player, by, reason;
-    long until, bannedAt, reducedUntil;
+    long until, bannedAt, reducedUntil, id;
 
-    Ban(String player, String by, String reason, long until, long bannedAt, long reducedUntil) {
+    Ban(long id, String player, String by, String reason, long until, long bannedAt, long reducedUntil) {
         this.player = player;
         this.by = by;
         this.reason = reason;
         this.until = until;
         this.bannedAt = bannedAt;
         this.reducedUntil = reducedUntil;
+        this.id = id;
     }
 
 
@@ -50,6 +51,10 @@ public class Ban {
     public long getUntil() {
         if (reducedUntil != 0) return reducedUntil;
         return until;
+    }
+
+    public long getId() {
+        return id;
     }
 
     public long getBannedAt() {
