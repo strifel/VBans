@@ -4,7 +4,7 @@ import de.strifel.vbans.VBans;
 
 import java.sql.SQLException;
 
-public class HistoryBan extends Ban{
+public class HistoryBan extends Ban {
     private final String purgedBy, reducedBy;
 
     HistoryBan(long id, String player, String by, String reason, long until, long bannedAt, long reducedUntil, String purgedBy, String reducedBy) {

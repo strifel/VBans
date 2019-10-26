@@ -18,13 +18,11 @@ import java.util.List;
 import static de.strifel.vbans.commands.CommandTempBan.getBanDuration;
 
 public class CommandReduce implements Command {
-    private final VBans vbans;
     private final DatabaseConnection database;
 
 
     public CommandReduce(VBans vBans) {
-        this.vbans = vBans;
-        this.database = vbans.getDatabaseConnection();
+        this.database = vBans.getDatabaseConnection();
     }
 
     @Override

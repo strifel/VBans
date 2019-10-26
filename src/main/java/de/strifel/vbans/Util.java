@@ -1,14 +1,19 @@
 package de.strifel.vbans;
 
-import com.google.common.base.CharMatcher;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import de.strifel.vbans.database.Ban;
-import me.lucko.luckperms.api.*;
+import me.lucko.luckperms.api.LocalizedNode;
+import me.lucko.luckperms.api.LuckPermsApi;
+import me.lucko.luckperms.api.Tristate;
+import me.lucko.luckperms.api.User;
 import net.kyori.text.TextComponent;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 

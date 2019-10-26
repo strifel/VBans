@@ -5,6 +5,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import de.strifel.vbans.VBans;
 import de.strifel.vbans.database.DatabaseConnection;
 import net.kyori.text.TextComponent;
 import net.kyori.text.format.TextColor;
@@ -18,14 +19,14 @@ public class CommandPurgeBan implements Command {
     private final ProxyServer server;
     private final DatabaseConnection database;
 
-    public CommandPurgeBan(ProxyServer server, DatabaseConnection databaseConnection) {
-        this.server = server;
-        database = databaseConnection;
+    public CommandPurgeBan(VBans vbans) {
+        this.server = vbans.getServer();
+        database = vbans.getDatabaseConnection();
     }
 
     @Override
     public void execute(CommandSource commandSource, @NonNull String[] strings) {
-        if (strings.length >= 1 && strings.length <=2) {
+        if (strings.length >= 1 && strings.length <= 2) {
             try {
                 String uuid = database.getUUID(strings[0]);
                 if (uuid != null && (database.getBan(uuid) != null || strings.length == 2)) {

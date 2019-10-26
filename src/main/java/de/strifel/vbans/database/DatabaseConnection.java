@@ -149,7 +149,7 @@ public class DatabaseConnection {
         if (results.next()) {
             do {
                 usernames.add(results.getString("username"));
-            } while(results.next());
+            } while (results.next());
         }
         return usernames;
     }

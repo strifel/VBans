@@ -22,9 +22,9 @@ public class CommandBanHistory implements Command {
     private final VBans vbans;
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
 
-    public CommandBanHistory(ProxyServer server, VBans vbans) {
+    public CommandBanHistory(VBans vbans) {
         database = vbans.getDatabaseConnection();
-        this.server = server;
+        this.server = vbans.getServer();
         this.vbans = vbans;
     }
 
@@ -51,7 +51,7 @@ public class CommandBanHistory implements Command {
     @Override
     public List<String> suggest(CommandSource source, @NonNull String[] currentArgs) {
         try {
-            List<String> users =  database.getUsernamesByQuery("");
+            List<String> users = database.getUsernamesByQuery("");
             users.addAll(Util.getAllPlayernames(server));
             return users;
         } catch (SQLException e) {
@@ -67,10 +67,10 @@ public class CommandBanHistory implements Command {
     private TextComponent generateBanText(HistoryBan ban) {
         TextComponent banText =
                 TextComponent.of("#" + ban.getId() + " " + DATE_FORMAT.format(ban.getBannedAt() * 1000) + ": ")
-                .append(TextComponent.of("\"" + ban.getReason() + "\"").decoration(TextDecoration.BOLD, TextDecoration.State.TRUE))
-                .append(TextComponent.of(" by "))
-                .append(TextComponent.of(ban.getBannedByUsername(vbans)))
-                .append(TextComponent.of(" "));
+                        .append(TextComponent.of("\"" + ban.getReason() + "\"").decoration(TextDecoration.BOLD, TextDecoration.State.TRUE))
+                        .append(TextComponent.of(" by "))
+                        .append(TextComponent.of(ban.getBannedByUsername(vbans)))
+                        .append(TextComponent.of(" "));
         banText = banText.color(TextColor.YELLOW);
         TextComponent length = getBanLength(ban.getOriginalBanEnd(), ban.getBannedAt());
         if (ban.isReduced()) {
@@ -92,8 +92,8 @@ public class CommandBanHistory implements Command {
 
     private TextComponent getBanLength(long end, long start) {
         if (end == -1) {
-           return TextComponent.of("(permanent)").color(TextColor.DARK_RED);
-        } else if (start - end >= 0){
+            return TextComponent.of("(permanent)").color(TextColor.DARK_RED);
+        } else if (start - end >= 0) {
             return TextComponent.of("(kick)").color(TextColor.AQUA);
         } else {
             long duration = end - start;

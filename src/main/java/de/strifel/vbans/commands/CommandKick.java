@@ -6,6 +6,7 @@ import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import de.strifel.vbans.Util;
+import de.strifel.vbans.VBans;
 import de.strifel.vbans.database.DatabaseConnection;
 import net.kyori.text.TextComponent;
 import net.kyori.text.format.TextColor;
@@ -22,9 +23,9 @@ public class CommandKick implements Command {
     private final ProxyServer server;
     private final DatabaseConnection database;
 
-    public CommandKick(ProxyServer server, DatabaseConnection databaseConnection) {
-        this.server = server;
-        database = databaseConnection;
+    public CommandKick(VBans vbans) {
+        this.server = vbans.getServer();
+        database = vbans.getDatabaseConnection();
     }
 
 
@@ -35,7 +36,7 @@ public class CommandKick implements Command {
                 Player player = oPlayer.get();
                 if (!player.hasPermission("VBans.prevent") || commandSource instanceof ConsoleCommandSource) {
                     String reason = "Kicked by an Operator!";
-                    if  (strings.length > 1 && commandSource.hasPermission("VBans.kick.reason")) {
+                    if (strings.length > 1 && commandSource.hasPermission("VBans.kick.reason")) {
                         reason = String.join(" ", Arrays.copyOfRange(strings, 1, strings.length));
                     }
                     player.disconnect(TextComponent.of("").append(TextComponent.of("You got kicked: \n").color(TextColor.DARK_RED).decoration(TextDecoration.BOLD, TextDecoration.State.TRUE)).append(TextComponent.of(reason)));

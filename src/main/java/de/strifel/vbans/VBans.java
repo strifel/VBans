@@ -1,7 +1,6 @@
 package de.strifel.vbans;
 
 import com.moandjiezana.toml.Toml;
-import com.sun.media.jfxmedia.events.PlayerEvent;
 import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.LoginEvent;
@@ -23,7 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 
-@Plugin(id = "vbans", name="VBans", version="1.0-SNAPSHOT", description="Ban players! Its fun!")
+@Plugin(id = "vbans", name = "VBans", version = "1.0-SNAPSHOT", description = "Ban players! Its fun!")
 public class VBans {
 
     private final ProxyServer server;
@@ -55,7 +54,6 @@ public class VBans {
     }
 
 
-
     @Inject
     public VBans(ProxyServer server, Logger logger, @DataDirectory final Path folder) {
         this.server = server;
@@ -72,12 +70,12 @@ public class VBans {
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
-        server.getCommandManager().register(new CommandKick(server, databaseConnection), "kick", "vkick");
-        server.getCommandManager().register(new CommandBan(server, this), "ban", "vban");
-        server.getCommandManager().register(new CommandTempBan(server, this), "tban", "tempban", "vtempban", "vtban");
-        server.getCommandManager().register(new CommandPurgeBan(server, databaseConnection), "pban", "vpurgeban", "purgeban", "delban");
+        server.getCommandManager().register(new CommandKick(this), "kick", "vkick");
+        server.getCommandManager().register(new CommandBan(this), "ban", "vban");
+        server.getCommandManager().register(new CommandTempBan(this), "tban", "tempban", "vtempban", "vtban");
+        server.getCommandManager().register(new CommandPurgeBan(this), "pban", "vpurgeban", "purgeban", "delban");
         server.getCommandManager().register(new CommandReduce(this), "reduceBan", "rban", "unban", "pardon");
-        server.getCommandManager().register(new CommandBanHistory(server, this), "banhistory", "bhistory", "bhist", "banh");
+        server.getCommandManager().register(new CommandBanHistory(this), "banhistory", "bhistory", "bhist", "banh");
         if (server.getPluginManager().isLoaded("luckperms"))
             luckPermsApi = LuckPerms.getApi();
     }
@@ -97,5 +95,9 @@ public class VBans {
 
     public DatabaseConnection getDatabaseConnection() {
         return databaseConnection;
+    }
+
+    public ProxyServer getServer() {
+        return server;
     }
 }

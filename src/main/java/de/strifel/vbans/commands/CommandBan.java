@@ -24,8 +24,8 @@ public class CommandBan implements Command {
     private final DatabaseConnection database;
     private final VBans vBans;
 
-    public CommandBan(ProxyServer server, VBans vBans) {
-        this.server = server;
+    public CommandBan(VBans vBans) {
+        this.server = vBans.getServer();
         this.database = vBans.getDatabaseConnection();
         this.vBans = vBans;
     }
@@ -34,14 +34,14 @@ public class CommandBan implements Command {
     public void execute(CommandSource commandSource, @NonNull String[] strings) {
         if (strings.length > 0) {
             String reason = "The Ban Hammer has spoken!";
-            if  (strings.length > 1 && commandSource.hasPermission("VBans.ban.reason")) {
+            if (strings.length > 1 && commandSource.hasPermission("VBans.ban.reason")) {
                 reason = String.join(" ", Arrays.copyOfRange(strings, 1, strings.length));
             }
             Optional<Player> oPlayer = server.getPlayer(strings[0]);
             if (oPlayer.isPresent()) {
                 Player player = oPlayer.get();
                 if (!player.hasPermission("VBans.prevent") || commandSource instanceof ConsoleCommandSource) {
-                    player.disconnect(Util.formatBannedMessage(commandSource instanceof ConsoleCommandSource ? "Console" : ((Player)commandSource).getUsername(), reason, -1));
+                    player.disconnect(Util.formatBannedMessage(commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUsername(), reason, -1));
                     try {
                         database.addBan(player.getUniqueId().toString(), -1, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString(), reason);
                     } catch (SQLException e) {

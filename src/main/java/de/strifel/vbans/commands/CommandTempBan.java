@@ -24,8 +24,8 @@ public class CommandTempBan implements Command {
     private final DatabaseConnection database;
     private final VBans vBans;
 
-    public CommandTempBan(ProxyServer server, VBans vBans) {
-        this.server = server;
+    public CommandTempBan(VBans vBans) {
+        this.server = vBans.getServer();
         database = vBans.getDatabaseConnection();
         this.vBans = vBans;
     }
@@ -39,7 +39,7 @@ public class CommandTempBan implements Command {
             }
             long end = (System.currentTimeMillis() / 1000) + duration;
             String reason = "The ban hammer has spoken!";
-            if  (strings.length > 2 && commandSource.hasPermission("VBans.temp.reason")) {
+            if (strings.length > 2 && commandSource.hasPermission("VBans.temp.reason")) {
                 reason = String.join(" ", Arrays.copyOfRange(strings, 2, strings.length));
             }
             Optional<Player> oPlayer = server.getPlayer(strings[0]);
@@ -47,7 +47,7 @@ public class CommandTempBan implements Command {
                 Player player = oPlayer.get();
                 if (!player.hasPermission("VBans.prevent") || commandSource instanceof ConsoleCommandSource) {
 
-                    player.disconnect(Util.formatBannedMessage(commandSource instanceof ConsoleCommandSource ? "Console" : ((Player)commandSource).getUsername(), reason, end));
+                    player.disconnect(Util.formatBannedMessage(commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUsername(), reason, end));
                     try {
                         database.addBan(player.getUniqueId().toString(), end, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString(), reason);
                     } catch (SQLException e) {
