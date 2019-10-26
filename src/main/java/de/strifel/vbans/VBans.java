@@ -12,6 +12,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import de.strifel.vbans.commands.*;
 import de.strifel.vbans.database.Ban;
 import de.strifel.vbans.database.DatabaseConnection;
+import me.lucko.luckperms.LuckPerms;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -27,6 +28,7 @@ public class VBans {
 
     private final ProxyServer server;
     private DatabaseConnection databaseConnection;
+    Object luckPermsApi;
 
 
     private Toml loadConfig(Path path) {
@@ -71,11 +73,13 @@ public class VBans {
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
         server.getCommandManager().register(new CommandKick(server, databaseConnection), "kick", "vkick");
-        server.getCommandManager().register(new CommandBan(server, databaseConnection), "ban", "vban");
-        server.getCommandManager().register(new CommandTempBan(server, databaseConnection), "tban", "tempban", "vtempban", "vtban");
+        server.getCommandManager().register(new CommandBan(server, this), "ban", "vban");
+        server.getCommandManager().register(new CommandTempBan(server, this), "tban", "tempban", "vtempban", "vtban");
         server.getCommandManager().register(new CommandPurgeBan(server, databaseConnection), "pban", "vpurgeban", "purgeban", "delban");
         server.getCommandManager().register(new CommandReduce(this), "reduceBan", "rban", "unban", "pardon");
         server.getCommandManager().register(new CommandBanHistory(server, this), "banhistory", "bhistory", "bhist", "banh");
+        if (server.getPluginManager().isLoaded("luckperms"))
+            luckPermsApi = LuckPerms.getApi();
     }
 
     @Subscribe
