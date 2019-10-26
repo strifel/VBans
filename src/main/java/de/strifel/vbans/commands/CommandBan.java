@@ -6,6 +6,7 @@ import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import de.strifel.vbans.Util;
+import de.strifel.vbans.database.Ban;
 import de.strifel.vbans.database.DatabaseConnection;
 import net.kyori.text.TextComponent;
 import net.kyori.text.format.TextColor;
@@ -53,8 +54,18 @@ public class CommandBan implements Command {
                 try {
                     String uuid = database.getUUID(strings[0]);
                     if (uuid != null) {
-                        database.addBan(uuid, -1, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString(), reason);
-                        commandSource.sendMessage(TextComponent.of("You banned " + strings[0]).color(TextColor.YELLOW));
+                        Ban currentBan = database.getBan(uuid);
+                        if (currentBan != null && commandSource.hasPermission("VBans.ban.topPerm")) {
+                            database.purgeActiveBans(uuid, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString());
+                            commandSource.sendMessage(TextComponent.of(strings[0] + " was already banned until " + Util.UNBAN_DATE_FORMAT.format(currentBan.getUntil() * 1000) + ". I removed that and created a perm ban.").color(TextColor.YELLOW));
+                            currentBan = null;
+                        }
+                        if (currentBan == null) {
+                            database.addBan(uuid, -1, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString(), reason);
+                            commandSource.sendMessage(TextComponent.of("You banned " + strings[0]).color(TextColor.YELLOW));
+                        } else {
+                            commandSource.sendMessage(TextComponent.of(strings[0] + " is already banned until " + Util.UNBAN_DATE_FORMAT.format(currentBan.getUntil() * 1000)).color(TextColor.RED));
+                        }
                     } else {
                         commandSource.sendMessage(TextComponent.of("Player not found!").color(TextColor.RED));
                     }
