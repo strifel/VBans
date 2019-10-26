@@ -23,12 +23,14 @@ public class CommandTempBan implements Command {
     private final ProxyServer server;
     private final DatabaseConnection database;
     private final VBans vBans;
+    private final String DEFAULT_REASON;
     private final String BANNED_BROADCAST;
 
     public CommandTempBan(VBans vBans) {
         this.server = vBans.getServer();
         database = vBans.getDatabaseConnection();
         this.vBans = vBans;
+        this.DEFAULT_REASON = vBans.getMessages().getString("StandardBanMessage");
         this.BANNED_BROADCAST = vBans.getMessages().getString("BannedBroadcast");
     }
 
@@ -40,7 +42,7 @@ public class CommandTempBan implements Command {
                 return;
             }
             long end = (System.currentTimeMillis() / 1000) + duration;
-            String reason = "The ban hammer has spoken!";
+            String reason = DEFAULT_REASON;
             if (strings.length > 2 && commandSource.hasPermission("VBans.temp.reason")) {
                 reason = String.join(" ", Arrays.copyOfRange(strings, 2, strings.length));
             }
@@ -83,7 +85,7 @@ public class CommandTempBan implements Command {
                                                 .replace("$reason", reason)
                                         , "VBans.bannedBroadcast", server);
                             } else {
-                                commandSource.sendMessage(TextComponent.of(strings[0] + " is already banned until " + Util.UNBAN_DATE_FORMAT.format(currentBan.getUntil() * 1000)).color(TextColor.RED));
+                                commandSource.sendMessage(TextComponent.of(strings[0] + " is already banned until " + (currentBan.getUntil() == -1 ? "the end of his life." : Util.UNBAN_DATE_FORMAT.format(currentBan.getUntil() * 1000))).color(TextColor.RED));
                             }
                         } else {
                             commandSource.sendMessage(TextComponent.of("You are not allowed to ban this player!").color(TextColor.RED));

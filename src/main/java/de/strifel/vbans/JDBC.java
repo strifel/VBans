@@ -33,7 +33,12 @@ class JDBC {
             e.printStackTrace();
             System.err.println("Cant download JDBC!");
         }
-        tmp.delete();
+        try {
+            Files.delete(Paths.get(tmp.getAbsolutePath(), "jdbc.zip"));
+            Files.delete(Paths.get(tmp.getAbsolutePath()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
