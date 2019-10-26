@@ -23,17 +23,19 @@ public class CommandBan implements Command {
     private final ProxyServer server;
     private final DatabaseConnection database;
     private final VBans vBans;
+    private final String DEFAULT_REASON;
 
     public CommandBan(VBans vBans) {
         this.server = vBans.getServer();
         this.database = vBans.getDatabaseConnection();
         this.vBans = vBans;
+        DEFAULT_REASON = vBans.getMessages().getString("StandardBanMessage");
     }
 
 
     public void execute(CommandSource commandSource, @NonNull String[] strings) {
         if (strings.length > 0) {
-            String reason = "The Ban Hammer has spoken!";
+            String reason = DEFAULT_REASON;
             if (strings.length > 1 && commandSource.hasPermission("VBans.ban.reason")) {
                 reason = String.join(" ", Arrays.copyOfRange(strings, 1, strings.length));
             }

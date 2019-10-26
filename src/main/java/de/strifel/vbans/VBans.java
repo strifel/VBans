@@ -27,6 +27,7 @@ public class VBans {
 
     private final ProxyServer server;
     private DatabaseConnection databaseConnection;
+    private Toml messages;
     Object luckPermsApi;
 
 
@@ -66,6 +67,8 @@ public class VBans {
         } catch (SQLException e) {
             System.err.println("An error occoured while connecting to MySQL: " + e.getMessage());
         }
+        messages = config.getTable("Messages");
+        Util.BAN_TEMPLATE = messages.getString("BanLayout");
     }
 
     @Subscribe
@@ -99,5 +102,9 @@ public class VBans {
 
     public ProxyServer getServer() {
         return server;
+    }
+
+    public Toml getMessages() {
+        return messages;
     }
 }

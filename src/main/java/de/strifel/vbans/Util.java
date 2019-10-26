@@ -25,7 +25,7 @@ public class Util {
         return players;
     }
 
-    private final static String BAN_TEMPLATE = "§4§lBANNED:§r\n§aUntil: $bannedUntil§r\n§3Reason: §r§b$reason§r\n§cBanned by: $bannedBy§r";
+    static String BAN_TEMPLATE = "";
     public final static SimpleDateFormat UNBAN_DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
     public static TextComponent formatBannedMessage(String bannedBy, String reason, long expires) {

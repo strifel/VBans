@@ -22,10 +22,14 @@ import java.util.Optional;
 public class CommandKick implements Command {
     private final ProxyServer server;
     private final DatabaseConnection database;
+    private final String DEFAULT_REASON;
+    private final String KICK_LAYOUT;
 
     public CommandKick(VBans vbans) {
         this.server = vbans.getServer();
         database = vbans.getDatabaseConnection();
+        DEFAULT_REASON = vbans.getMessages().getString("StandardKickMessage");
+        KICK_LAYOUT = vbans.getMessages().getString("KickLayout");
     }
 
 
@@ -35,11 +39,11 @@ public class CommandKick implements Command {
             if (oPlayer.isPresent()) {
                 Player player = oPlayer.get();
                 if (!player.hasPermission("VBans.prevent") || commandSource instanceof ConsoleCommandSource) {
-                    String reason = "Kicked by an Operator!";
+                    String reason = DEFAULT_REASON;
                     if (strings.length > 1 && commandSource.hasPermission("VBans.kick.reason")) {
                         reason = String.join(" ", Arrays.copyOfRange(strings, 1, strings.length));
                     }
-                    player.disconnect(TextComponent.of("").append(TextComponent.of("You got kicked: \n").color(TextColor.DARK_RED).decoration(TextDecoration.BOLD, TextDecoration.State.TRUE)).append(TextComponent.of(reason)));
+                    player.disconnect(TextComponent.of(KICK_LAYOUT.replace("$reason", reason)));
                     try {
                         database.addBan(player.getUniqueId().toString(), System.currentTimeMillis() / 1000, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString(), reason);
                     } catch (SQLException e) {
