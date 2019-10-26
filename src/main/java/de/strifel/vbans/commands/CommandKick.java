@@ -9,6 +9,7 @@ import de.strifel.vbans.Util;
 import de.strifel.vbans.database.DatabaseConnection;
 import net.kyori.text.TextComponent;
 import net.kyori.text.format.TextColor;
+import net.kyori.text.format.TextDecoration;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.sql.SQLException;
@@ -33,11 +34,11 @@ public class CommandKick implements Command {
             if (oPlayer.isPresent()) {
                 Player player = oPlayer.get();
                 if (!player.hasPermission("VBans.prevent") || commandSource instanceof ConsoleCommandSource) {
-                    String reason = "You are being kicked!";
+                    String reason = "Kicked by an Operator!";
                     if  (strings.length > 1 && commandSource.hasPermission("VBans.kick.reason")) {
                         reason = String.join(" ", Arrays.copyOfRange(strings, 1, strings.length));
                     }
-                    player.disconnect(TextComponent.of(reason));
+                    player.disconnect(TextComponent.of("").append(TextComponent.of("You got kicked: \n").color(TextColor.DARK_RED).decoration(TextDecoration.BOLD, TextDecoration.State.TRUE)).append(TextComponent.of(reason)));
                     try {
                         database.addBan(player.getUniqueId().toString(), System.currentTimeMillis() / 1000, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString(), reason);
                     } catch (SQLException e) {
