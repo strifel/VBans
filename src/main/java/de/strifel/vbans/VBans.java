@@ -5,6 +5,7 @@ import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -22,12 +23,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
 
+
 @Plugin(id = "vbans", name = "VBans", version = "1.0-SNAPSHOT", description = "Ban players! Its fun!")
 public class VBans {
 
     private final ProxyServer server;
     private DatabaseConnection databaseConnection;
     private Toml messages;
+    private Toml config;
     Object luckPermsApi;
 
 
@@ -58,7 +61,15 @@ public class VBans {
     @Inject
     public VBans(ProxyServer server, Logger logger, @DataDirectory final Path folder) {
         this.server = server;
-        Toml config = loadConfig(folder);
+        config = loadConfig(folder);
+        messages = config.getTable("Messages");
+        Util.BAN_TEMPLATE = messages.getString("BanLayout");
+    }
+
+    @Subscribe
+    public void onProxyInitialization(ProxyInitializeEvent event) {
+        // Connect to database
+        JDBC.inject(this);
         Toml database = config.getTable("Database");
         try {
             databaseConnection = new DatabaseConnection(database.getString("host"), Integer.parseInt(database.getLong("port").toString()), database.getString("username"), database.getString("password"), database.getString("database"));
@@ -67,18 +78,14 @@ public class VBans {
         } catch (SQLException e) {
             System.err.println("An error occoured while connecting to MySQL: " + e.getMessage());
         }
-        messages = config.getTable("Messages");
-        Util.BAN_TEMPLATE = messages.getString("BanLayout");
-    }
-
-    @Subscribe
-    public void onProxyInitialization(ProxyInitializeEvent event) {
+        // Register commands
         server.getCommandManager().register(new CommandKick(this), "kick", "vkick");
         server.getCommandManager().register(new CommandBan(this), "ban", "vban");
         server.getCommandManager().register(new CommandTempBan(this), "tban", "tempban", "vtempban", "vtban");
         server.getCommandManager().register(new CommandPurgeBan(this), "pban", "vpurgeban", "purgeban", "delban");
         server.getCommandManager().register(new CommandReduce(this), "reduceBan", "rban", "unban", "pardon");
         server.getCommandManager().register(new CommandBanHistory(this), "banhistory", "bhistory", "bhist", "banh");
+        // Luck Perms support
         if (server.getPluginManager().isLoaded("luckperms"))
             luckPermsApi = LuckPerms.getApi();
     }
