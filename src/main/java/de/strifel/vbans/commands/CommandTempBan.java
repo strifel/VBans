@@ -23,11 +23,13 @@ public class CommandTempBan implements Command {
     private final ProxyServer server;
     private final DatabaseConnection database;
     private final VBans vBans;
+    private final String BANNED_BROADCAST;
 
     public CommandTempBan(VBans vBans) {
         this.server = vBans.getServer();
         database = vBans.getDatabaseConnection();
         this.vBans = vBans;
+        this.BANNED_BROADCAST = vBans.getMessages().getString("BannedBroadcast");
     }
 
     public void execute(CommandSource commandSource, @NonNull String[] strings) {
@@ -56,6 +58,12 @@ public class CommandTempBan implements Command {
                         return;
                     }
                     commandSource.sendMessage(TextComponent.of("You banned " + strings[0] + " for " + duration + " seconds!").color(TextColor.YELLOW));
+                    Util.broadcastMessage(BANNED_BROADCAST
+                                    .replace("$bannedBy", commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUsername())
+                                    .replace("$player", strings[0])
+                                    .replace("$bannedUntil", Util.UNBAN_DATE_FORMAT.format(end * 1000))
+                                    .replace("$reason", reason)
+                            , "VBans.bannedBroadcast", server);
                 } else {
                     commandSource.sendMessage(TextComponent.of("You are not allowed to Ban this player!").color(TextColor.RED));
                 }
@@ -68,6 +76,12 @@ public class CommandTempBan implements Command {
                             if (currentBan == null) {
                                 database.addBan(uuid, end, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString(), reason);
                                 commandSource.sendMessage(TextComponent.of("You banned " + strings[0] + " for " + duration + " seconds!").color(TextColor.YELLOW));
+                                Util.broadcastMessage(BANNED_BROADCAST
+                                                .replace("$bannedBy", commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUsername())
+                                                .replace("$player", strings[0])
+                                                .replace("$bannedUntil", Util.UNBAN_DATE_FORMAT.format(end * 1000))
+                                                .replace("$reason", reason)
+                                        , "VBans.bannedBroadcast", server);
                             } else {
                                 commandSource.sendMessage(TextComponent.of(strings[0] + " is already banned until " + Util.UNBAN_DATE_FORMAT.format(currentBan.getUntil() * 1000)).color(TextColor.RED));
                             }

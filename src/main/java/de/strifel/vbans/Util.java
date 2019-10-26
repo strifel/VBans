@@ -49,6 +49,15 @@ public class Util {
         }
     }
 
+    public static void broadcastMessage(String message, String permission, ProxyServer server){
+        for (Player player : server.getAllPlayers()) {
+            if (permission == null || player.hasPermission(permission)) {
+                player.sendMessage(TextComponent.of(message));
+            }
+        }
+        server.getConsoleCommandSource().sendMessage(TextComponent.of(message));
+    }
+
     public static boolean hasOfflineProtectBanPermission(String uuid, VBans vBans) {
         if (vBans.luckPermsApi != null) {
             try {
