@@ -27,7 +27,7 @@ public class DatabaseConnection {
     public DatabaseConnection(String server, int port, String username, String password, String database) throws ClassNotFoundException, SQLException {
         synchronized (this) {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://" + server + ":" + port + "/" + database, username, password);
+            connection = DriverManager.getConnection("jdbc:mysql://" + server + ":" + port + "/" + database + "?autoReconnect=true", username, password);
             createDefaultTable();
         }
     }
