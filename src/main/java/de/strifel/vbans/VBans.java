@@ -78,13 +78,14 @@ public class VBans {
         } catch (SQLException e) {
             System.err.println("An error occoured while connecting to MySQL: " + e.getMessage());
         }
+        boolean isGCommand = config.getTable("Options").getBoolean("changeToGCommands");
         // Register commands
-        server.getCommandManager().register(new CommandKick(this), "kick", "vkick");
-        server.getCommandManager().register(new CommandBan(this), "ban", "vban");
-        server.getCommandManager().register(new CommandTempBan(this), "tban", "tempban", "vtempban", "vtban");
+        server.getCommandManager().register(new CommandKick(this), isGCommand ? "gkick" : "kick", "vkick");
+        server.getCommandManager().register(new CommandBan(this), isGCommand ? "gban" : "ban", "vban");
+        server.getCommandManager().register(new CommandTempBan(this), "tban", isGCommand ? "gtempban" : "tempban", "vtempban", "vtban");
         server.getCommandManager().register(new CommandPurgeBan(this), "pban", "vpurgeban", "purgeban", "delban");
-        server.getCommandManager().register(new CommandReduce(this), "reduceBan", "rban", "unban", "pardon");
-        server.getCommandManager().register(new CommandBanHistory(this), "banhistory", "bhistory", "bhist", "banh");
+        server.getCommandManager().register(new CommandReduce(this), "reduceBan", "rban", isGCommand ? "gunban" : "unban", isGCommand ? "gpardon" : "pardon");
+        server.getCommandManager().register(new CommandBanHistory(this), isGCommand ? "gbanhistory" : "banhistory", "bhistory", "bhist", "banh");
         // Luck Perms support
         if (server.getPluginManager().isLoaded("luckperms"))
             luckPermsApi = LuckPerms.getApi();
