@@ -36,6 +36,20 @@ I developed these commands to get used in different situations.<br>
 /delban should only be used if the server made an mistake by banning the player (e.g. The player could prove that he was not hacking)<br>
 /reduce or /unban should be used if the server forgives the player (e.g. the player wrote a ban appeal)
 
+## See who has been banned
+If you want to see who has been banned. The only way at the moment is to look at the databse with a statement like:
+```mysql
+SELECT username AS "Banned User", 
+       Reason, 
+       From_unixtime(until) AS "Banned until", 
+       issuedat != until    AS "Was Ban", 
+       (until = -1 
+              || until > Unix_timestamp()) AS "Still banned" 
+FROM   ban_bans, 
+       ban_namecache 
+WHERE  ban_bans.user = ban_namecache.user 
+AND    purged IS NULL;
+```
 ## End
 Please report any issue you find.<br>
 If you have any problems or you are missing a feature please contact me.
