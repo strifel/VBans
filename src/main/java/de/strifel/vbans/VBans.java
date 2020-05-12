@@ -5,14 +5,15 @@ import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
-import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import de.strifel.vbans.commands.*;
 import de.strifel.vbans.database.Ban;
 import de.strifel.vbans.database.DatabaseConnection;
-import me.lucko.luckperms.LuckPerms;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -31,7 +32,7 @@ public class VBans {
     private DatabaseConnection databaseConnection;
     private Toml messages;
     private Toml config;
-    Object luckPermsApi;
+    LuckPerms luckPermsApi;
 
 
     private Toml loadConfig(Path path) {
@@ -88,7 +89,7 @@ public class VBans {
         server.getCommandManager().register(new CommandBanHistory(this), isGCommand ? "gbanhistory" : "banhistory", "bhistory", "bhist", "banh");
         // Luck Perms support
         if (server.getPluginManager().isLoaded("luckperms"))
-            luckPermsApi = LuckPerms.getApi();
+            luckPermsApi = LuckPermsProvider.get();
     }
 
     @Subscribe

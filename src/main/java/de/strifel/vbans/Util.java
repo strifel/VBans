@@ -3,30 +3,30 @@ package de.strifel.vbans;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import de.strifel.vbans.database.Ban;
-import me.lucko.luckperms.api.LocalizedNode;
-import me.lucko.luckperms.api.LuckPermsApi;
-import me.lucko.luckperms.api.Tristate;
-import me.lucko.luckperms.api.User;
 import net.kyori.text.TextComponent;
+import net.luckperms.api.cacheddata.CachedPermissionData;
+import net.luckperms.api.context.ContextManager;
+import net.luckperms.api.context.ImmutableContextSet;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.query.QueryOptions;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 
 public class Util {
 
+    public final static SimpleDateFormat UNBAN_DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    static String BAN_TEMPLATE = "";
+
     public static List<String> getAllPlayernames(ProxyServer server) {
         List<String> players = new ArrayList<>();
         for (Player player : server.getAllPlayers()) players.add(player.getUsername());
         return players;
     }
-
-    static String BAN_TEMPLATE = "";
-    public final static SimpleDateFormat UNBAN_DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
     public static TextComponent formatBannedMessage(String bannedBy, String reason, long expires) {
         String bannedUntil = "forever";
@@ -49,7 +49,7 @@ public class Util {
         }
     }
 
-    public static void broadcastMessage(String message, String permission, ProxyServer server){
+    public static void broadcastMessage(String message, String permission, ProxyServer server) {
         for (Player player : server.getAllPlayers()) {
             if (permission == null || player.hasPermission(permission)) {
                 player.sendMessage(TextComponent.of(message));
@@ -61,34 +61,17 @@ public class Util {
     public static boolean hasOfflineProtectBanPermission(String uuid, VBans vBans) {
         if (vBans.luckPermsApi != null) {
             try {
-                User user = ((LuckPermsApi) vBans.luckPermsApi).getUserManager().loadUser(UUID.fromString(uuid)).get();
+                User user = vBans.luckPermsApi.getUserManager().loadUser(UUID.fromString(uuid)).get();
                 if (user != null) {
-                    Set<LocalizedNode> nodes = user.getAllNodesFiltered(((LuckPermsApi) vBans.luckPermsApi).getContextManager().getStaticContexts());
-                    boolean allowed = false;
-                    for (LocalizedNode localizedNode : nodes) {
-                        if (localizedNode.getPermission().equals("*")) {
-                            if (localizedNode.getTristate() == Tristate.TRUE) {
-                                allowed = true;
-                            } else if (localizedNode.getTristate() == Tristate.FALSE) {
-                                return false;
-                            }
-                        }
-                        if (localizedNode.getPermission().equalsIgnoreCase("VBans.*")) {
-                            if (localizedNode.getTristate() == Tristate.TRUE) {
-                                allowed = true;
-                            } else if (localizedNode.getTristate() == Tristate.FALSE) {
-                                return false;
-                            }
-                        }
-                        if (localizedNode.getPermission().equalsIgnoreCase("VBans.prevent")) {
-                            if (localizedNode.getTristate() == Tristate.TRUE) {
-                                allowed = true;
-                            } else if (localizedNode.getTristate() == Tristate.FALSE) {
-                                return false;
-                            }
-                        }
-                    }
-                    return allowed;
+
+                    ContextManager contextManager = vBans.luckPermsApi.getContextManager();
+                    ImmutableContextSet contextSet = contextManager.getContext(user).orElseGet(contextManager::getStaticContext);
+
+                    CachedPermissionData permissionData = user.getCachedData().getPermissionData(QueryOptions.contextual(contextSet));
+
+                    return permissionData.checkPermission("*").asBoolean()
+                            || permissionData.checkPermission("VBans.*").asBoolean()
+                            || permissionData.checkPermission("VBans.prevent").asBoolean();
                 }
             } catch (InterruptedException | ExecutionException e) {
                 return false;
