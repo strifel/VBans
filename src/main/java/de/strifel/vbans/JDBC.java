@@ -22,12 +22,12 @@ class JDBC {
         tmp.mkdir();
         Path zip = Paths.get(tmp.getAbsolutePath(), "jdbc.zip");
         try {
-            URL jdbc = new URL("https://cdn.mysql.com//Downloads/Connector-J/mysql-connector-java-8.0.18.zip");
+            URL jdbc = new URL("https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.20.zip");
             try (InputStream in = jdbc.openStream()) {
                 Files.copy(in, zip, StandardCopyOption.REPLACE_EXISTING);
             }
             try (FileSystem zipFileSystem = FileSystems.newFileSystem(zip, null)) {
-                Files.copy(zipFileSystem.getPath("mysql-connector-java-8.0.18/mysql-connector-java-8.0.18.jar"), Paths.get(new File("plugins/vbans").getAbsolutePath(), "jdbc.jar"), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(zipFileSystem.getPath("mysql-connector-java-8.0.20/mysql-connector-java-8.0.20.jar"), Paths.get(new File("plugins/vbans").getAbsolutePath(), "jdbc.jar"), StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (IOException e) {
             e.printStackTrace();
