@@ -20,6 +20,11 @@
         </plugins>
     </build>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
+
     <repositories>
         <repository>
             <id>velocity</id>
@@ -35,9 +40,10 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>me.lucko.luckperms</groupId>
-            <artifactId>luckperms-api</artifactId>
-            <version>4.4</version>
+            <groupId>net.luckperms</groupId>
+            <artifactId>api</artifactId>
+            <version>5.0</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
