@@ -26,7 +26,7 @@ class JDBC {
             try (InputStream in = jdbc.openStream()) {
                 Files.copy(in, zip, StandardCopyOption.REPLACE_EXISTING);
             }
-            try (FileSystem zipFileSystem = FileSystems.newFileSystem(zip, null)) {
+            try (FileSystem zipFileSystem = FileSystems.newFileSystem(zip, (ClassLoader) null)) {
                 Files.copy(zipFileSystem.getPath("mysql-connector-java-8.0.20/mysql-connector-java-8.0.20.jar"), Paths.get(new File("plugins/vbans").getAbsolutePath(), "jdbc.jar"), StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (IOException e) {
