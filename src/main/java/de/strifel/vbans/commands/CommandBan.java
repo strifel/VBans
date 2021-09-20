@@ -1,7 +1,6 @@
 package de.strifel.vbans.commands;
 
-import com.velocitypowered.api.command.Command;
-import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.command.*;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -9,9 +8,8 @@ import de.strifel.vbans.Util;
 import de.strifel.vbans.VBans;
 import de.strifel.vbans.database.Ban;
 import de.strifel.vbans.database.DatabaseConnection;
-import net.kyori.text.TextComponent;
-import net.kyori.text.format.TextColor;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -19,7 +17,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public class CommandBan implements Command {
+import static de.strifel.vbans.Util.COLOR_RED;
+import static de.strifel.vbans.Util.COLOR_YELLOW;
+
+public class CommandBan implements SimpleCommand {
     private final ProxyServer server;
     private final DatabaseConnection database;
     private final VBans vBans;
@@ -34,8 +35,11 @@ public class CommandBan implements Command {
         BANNED_BROADCAST = vBans.getMessages().getString("BannedBroadcast");
     }
 
+    @Override
+    public void execute(Invocation commandInvocation) {
+        CommandSource commandSource = commandInvocation.source();
+        String[] strings = commandInvocation.arguments();
 
-    public void execute(CommandSource commandSource, @NonNull String[] strings) {
         if (strings.length > 0) {
             String reason = DEFAULT_REASON;
             if (strings.length > 1 && commandSource.hasPermission("VBans.ban.reason")) {
@@ -50,10 +54,10 @@ public class CommandBan implements Command {
                         database.addBan(player.getUniqueId().toString(), -1, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString(), reason);
                     } catch (SQLException e) {
                         e.printStackTrace();
-                        commandSource.sendMessage(TextComponent.of("Your ban can not be registered.").color(TextColor.RED));
+                        commandSource.sendMessage(Component.text("Your ban can not be registered.").color(COLOR_RED));
                         return;
                     }
-                    commandSource.sendMessage(TextComponent.of("You banned " + strings[0]).color(TextColor.YELLOW));
+                    commandSource.sendMessage(Component.text("You banned " + strings[0]).color(COLOR_RED));
                     Util.broadcastMessage(BANNED_BROADCAST
                                     .replace("$bannedBy", commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUsername())
                                     .replace("$player", strings[0])
@@ -61,7 +65,7 @@ public class CommandBan implements Command {
                                     .replace("$reason", reason)
                             , "VBans.bannedBroadcast", server);
                 } else {
-                    commandSource.sendMessage(TextComponent.of("You are not allowed to ban this player!").color(TextColor.RED));
+                    commandSource.sendMessage(Component.text("You are not allowed to ban this player!").color(COLOR_RED));
                 }
             } else {
                 try {
@@ -71,12 +75,12 @@ public class CommandBan implements Command {
                             Ban currentBan = database.getBan(uuid);
                             if (currentBan != null && commandSource.hasPermission("VBans.ban.topPerm") && currentBan.getUntil() != -1) {
                                 database.purgeActiveBans(uuid, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString());
-                                commandSource.sendMessage(TextComponent.of(strings[0] + " was already banned until " + Util.UNBAN_DATE_FORMAT.format(currentBan.getUntil() * 1000) + ". I removed that and created a perm ban.").color(TextColor.YELLOW));
+                                commandSource.sendMessage(Component.text(strings[0] + " was already banned until " + Util.UNBAN_DATE_FORMAT.format(currentBan.getUntil() * 1000) + ". I removed that and created a perm ban.").color(COLOR_RED));
                                 currentBan = null;
                             }
                             if (currentBan == null) {
                                 database.addBan(uuid, -1, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString(), reason);
-                                commandSource.sendMessage(TextComponent.of("You banned " + strings[0]).color(TextColor.YELLOW));
+                                commandSource.sendMessage(Component.text("You banned " + strings[0]).color(COLOR_YELLOW));
                                 Util.broadcastMessage(BANNED_BROADCAST
                                         .replace("$bannedBy", commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUsername())
                                         .replace("$player", strings[0])
@@ -84,31 +88,33 @@ public class CommandBan implements Command {
                                         .replace("$reason", reason)
                                 , "VBans.bannedBroadcast", server);
                             } else {
-                                commandSource.sendMessage(TextComponent.of(strings[0] + " is already banned until " + (currentBan.getUntil() == -1 ? "the end of his life." : Util.UNBAN_DATE_FORMAT.format(currentBan.getUntil() * 1000))).color(TextColor.RED));
+                                commandSource.sendMessage(Component.text(strings[0] + " is already banned until " + (currentBan.getUntil() == -1 ? "the end of his life." : Util.UNBAN_DATE_FORMAT.format(currentBan.getUntil() * 1000))).color(COLOR_RED));
                             }
                         } else {
-                            commandSource.sendMessage(TextComponent.of("You are not allowed to ban this player!").color(TextColor.RED));
+                            commandSource.sendMessage(Component.text("You are not allowed to ban this player!").color(COLOR_RED));
                         }
                     } else {
-                        commandSource.sendMessage(TextComponent.of("Player not found!").color(TextColor.RED));
+                        commandSource.sendMessage(Component.text("Player not found!").color(TextColor.fromHexString("")));
                     }
                 } catch (SQLException e) {
-                    commandSource.sendMessage(TextComponent.of("An database issue occurred!").color(TextColor.RED));
+                    commandSource.sendMessage(Component.text("An database issue occurred!").color(COLOR_RED));
                 }
             }
         } else {
-            commandSource.sendMessage(TextComponent.of("Usage: /ban <player> [reason]").color(TextColor.RED));
+            commandSource.sendMessage(Component.text("Usage: /ban <player> [reason]").color(COLOR_RED));
         }
     }
 
-    public List<String> suggest(CommandSource source, @NonNull String[] currentArgs) {
-        if (currentArgs.length == 1) {
+    @Override
+    public List<String> suggest(Invocation commandInvocation) {
+        if (commandInvocation.arguments().length == 1) {
             return Util.getAllPlayernames(server);
         }
         return new ArrayList<String>();
     }
 
-    public boolean hasPermission(CommandSource source, @NonNull String[] args) {
-        return source.hasPermission("VBans.ban");
+    @Override
+    public boolean hasPermission(Invocation commandInvocation) {
+        return commandInvocation.source().hasPermission("VBans.ban");
     }
 }

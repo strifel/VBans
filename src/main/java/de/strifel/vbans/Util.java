@@ -3,12 +3,8 @@ package de.strifel.vbans;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import de.strifel.vbans.database.Ban;
-import net.kyori.text.TextComponent;
-import net.luckperms.api.cacheddata.CachedPermissionData;
-import net.luckperms.api.context.ContextManager;
-import net.luckperms.api.context.ImmutableContextSet;
-import net.luckperms.api.model.user.User;
-import net.luckperms.api.query.QueryOptions;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -19,6 +15,11 @@ import java.util.concurrent.ExecutionException;
 
 public class Util {
 
+    public static final TextColor COLOR_RED = TextColor.fromCSSHexString("FF5555");
+    public static final TextColor COLOR_YELLOW = TextColor.fromCSSHexString("FFFF55");
+    public static final TextColor COLOR_DARK_GREEN = TextColor.fromCSSHexString("00AA00");
+
+
     public final static SimpleDateFormat UNBAN_DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy HH:mm");
     static String BAN_TEMPLATE = "";
 
@@ -28,15 +29,15 @@ public class Util {
         return players;
     }
 
-    public static TextComponent formatBannedMessage(String bannedBy, String reason, long expires) {
+    public static Component formatBannedMessage(String bannedBy, String reason, long expires) {
         String bannedUntil = "forever";
         if (expires != -1) {
             bannedUntil = UNBAN_DATE_FORMAT.format(expires * 1000);
         }
-        return TextComponent.of(BAN_TEMPLATE.replace("$bannedUntil", bannedUntil).replace("$reason", reason).replace("$bannedBy", bannedBy));
+        return Component.text(BAN_TEMPLATE.replace("$bannedUntil", bannedUntil).replace("$reason", reason).replace("$bannedBy", bannedBy));
     }
 
-    public static TextComponent formatBannedMessage(Ban ban, VBans vbans) {
+    public static Component formatBannedMessage(Ban ban, VBans vbans) {
         return formatBannedMessage(ban.getBannedByUsername(vbans), ban.getReason(), ban.getUntil());
     }
 
@@ -52,30 +53,35 @@ public class Util {
     public static void broadcastMessage(String message, String permission, ProxyServer server) {
         for (Player player : server.getAllPlayers()) {
             if (permission == null || player.hasPermission(permission)) {
-                player.sendMessage(TextComponent.of(message));
+                player.sendMessage(Component.text(message));
             }
         }
-        server.getConsoleCommandSource().sendMessage(TextComponent.of(message));
+        server.getConsoleCommandSource().sendMessage(Component.text(message));
     }
 
     public static boolean hasOfflineProtectBanPermission(String uuid, VBans vBans) {
-        if (vBans.luckPermsApi != null) {
-            try {
-                User user = vBans.luckPermsApi.getUserManager().loadUser(UUID.fromString(uuid)).get();
-                if (user != null) {
+        try {
+            // Things are not imported here so the plugin can run without Luckperms
+            if (vBans.luckPermsApi != null) {
+                net.luckperms.api.LuckPerms luckPerms = (net.luckperms.api.LuckPerms) vBans.luckPermsApi;
+                try {
+                    net.luckperms.api.model.user.User user = luckPerms.getUserManager().loadUser(UUID.fromString(uuid)).get();
+                    if (user != null) {
+                        net.luckperms.api.context.ContextManager contextManager = luckPerms.getContextManager();
+                        net.luckperms.api.context.ImmutableContextSet contextSet = contextManager.getContext(user).orElseGet(contextManager::getStaticContext);
 
-                    ContextManager contextManager = vBans.luckPermsApi.getContextManager();
-                    ImmutableContextSet contextSet = contextManager.getContext(user).orElseGet(contextManager::getStaticContext);
+                        net.luckperms.api.cacheddata.CachedPermissionData permissionData = user.getCachedData().getPermissionData(net.luckperms.api.query.QueryOptions.contextual(contextSet));
 
-                    CachedPermissionData permissionData = user.getCachedData().getPermissionData(QueryOptions.contextual(contextSet));
-
-                    return permissionData.checkPermission("*").asBoolean()
-                            || permissionData.checkPermission("VBans.*").asBoolean()
-                            || permissionData.checkPermission("VBans.prevent").asBoolean();
+                        return permissionData.checkPermission("*").asBoolean()
+                                || permissionData.checkPermission("VBans.*").asBoolean()
+                                || permissionData.checkPermission("VBans.prevent").asBoolean();
+                    }
+                } catch (InterruptedException | ExecutionException e) {
+                    return false;
                 }
-            } catch (InterruptedException | ExecutionException e) {
-                return false;
             }
+        } catch(NoClassDefFoundError e) {
+            // it does not exist on the classpath
         }
         return false;
     }

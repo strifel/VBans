@@ -1,22 +1,22 @@
 package de.strifel.vbans.commands;
 
-import com.velocitypowered.api.command.Command;
 import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.ProxyServer;
 import de.strifel.vbans.Util;
 import de.strifel.vbans.VBans;
 import de.strifel.vbans.database.DatabaseConnection;
 import de.strifel.vbans.database.HistoryBan;
-import net.kyori.text.TextComponent;
-import net.kyori.text.format.TextColor;
-import net.kyori.text.format.TextDecoration;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-public class CommandBanHistory implements Command {
+import static de.strifel.vbans.Util.*;
+
+public class CommandBanHistory implements SimpleCommand {
     private final DatabaseConnection database;
     private final ProxyServer server;
     private final VBans vbans;
@@ -30,26 +30,29 @@ public class CommandBanHistory implements Command {
 
 
     @Override
-    public void execute(CommandSource commandSource, @NonNull String[] strings) {
+    public void execute(Invocation commandInvocation) {
+        String[] strings = commandInvocation.arguments();
+        CommandSource commandSource = commandInvocation.source();
+
         if (strings.length == 1) {
             try {
                 List<HistoryBan> bans = database.getBanHistory(server.getPlayer(strings[0]).isPresent() ? server.getPlayer(strings[0]).get().getUniqueId().toString() : database.getUUID(strings[0]), commandSource.hasPermission("VBans.history.seeDeleted"));
-                commandSource.sendMessage(TextComponent.of("Ban history of " + strings[0]).color(TextColor.YELLOW));
-                commandSource.sendMessage(TextComponent.of("----------------------------------------").color(TextColor.YELLOW));
+                commandSource.sendMessage(Component.text("Ban history of " + strings[0]).color(COLOR_YELLOW));
+                commandSource.sendMessage(Component.text("----------------------------------------").color(COLOR_YELLOW));
                 for (HistoryBan ban : bans) {
                     commandSource.sendMessage(generateBanText(ban));
                 }
-                commandSource.sendMessage(TextComponent.of("----------------------------------------").color(TextColor.YELLOW));
+                commandSource.sendMessage(Component.text("----------------------------------------").color(COLOR_YELLOW));
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         } else {
-            commandSource.sendMessage(TextComponent.of("Usage: /banhistory <username>").color(TextColor.RED));
+            commandSource.sendMessage(Component.text("Usage: /banhistory <username>").color(COLOR_RED));
         }
     }
 
     @Override
-    public List<String> suggest(CommandSource source, @NonNull String[] currentArgs) {
+    public List<String> suggest(Invocation commandInvocation) {
         try {
             List<String> users = database.getUsernamesByQuery("");
             users.addAll(Util.getAllPlayernames(server));
@@ -60,51 +63,51 @@ public class CommandBanHistory implements Command {
     }
 
     @Override
-    public boolean hasPermission(CommandSource source, @NonNull String[] args) {
-        return source.hasPermission("VBans.history");
+    public boolean hasPermission(Invocation commandInvocation) {
+        return commandInvocation.source().hasPermission("VBans.history");
     }
 
-    private TextComponent generateBanText(HistoryBan ban) {
-        TextComponent banText =
-                TextComponent.of("#" + ban.getId() + " " + DATE_FORMAT.format(ban.getBannedAt() * 1000) + ": ")
-                        .append(TextComponent.of("\"" + ban.getReason() + "\"").decoration(TextDecoration.BOLD, TextDecoration.State.TRUE))
-                        .append(TextComponent.of(" by "))
-                        .append(TextComponent.of(ban.getBannedByUsername(vbans)))
-                        .append(TextComponent.of(" "));
-        banText = banText.color(TextColor.YELLOW);
-        TextComponent length = getBanLength(ban.getOriginalBanEnd(), ban.getBannedAt());
+    private Component generateBanText(HistoryBan ban) {
+        Component banText =
+                Component.text("#" + ban.getId() + " " + DATE_FORMAT.format(ban.getBannedAt() * 1000) + ": ")
+                        .append(Component.text("\"" + ban.getReason() + "\"").decoration(TextDecoration.BOLD, TextDecoration.State.TRUE))
+                        .append(Component.text(" by "))
+                        .append(Component.text(ban.getBannedByUsername(vbans)))
+                        .append(Component.text(" "));
+        banText = banText.color(COLOR_YELLOW);
+        Component length = getBanLength(ban.getOriginalBanEnd(), ban.getBannedAt());
         if (ban.isReduced()) {
             length = length.decoration(TextDecoration.STRIKETHROUGH, TextDecoration.State.TRUE);
-            banText = banText.append(length).append(TextComponent.of(" "));
+            banText = banText.append(length).append(Component.text(" "));
             banText = banText.append(getBanLength(ban.getUntil(), ban.getBannedAt()));
-            banText = banText.append(TextComponent.of("(Reduced by " + ban.getReducedByUsername(vbans) + ")").color(TextColor.DARK_GREEN));
+            banText = banText.append(Component.text("(Reduced by " + ban.getReducedByUsername(vbans) + ")").color(COLOR_DARK_GREEN));
         } else {
             banText = banText.append(length);
         }
         if (ban.isPurged()) {
             banText = banText.decoration(TextDecoration.STRIKETHROUGH, TextDecoration.State.TRUE);
-            banText = TextComponent.of("").append(banText).append(TextComponent.of("(Deleted by " + ban.getPurgedByUsername(vbans) + ")").color(TextColor.LIGHT_PURPLE));
+            banText = Component.text("").append(banText).append(Component.text("(Deleted by " + ban.getPurgedByUsername(vbans) + ")"));
         }
 
         return banText;
     }
 
 
-    private TextComponent getBanLength(long end, long start) {
+    private Component getBanLength(long end, long start) {
         if (end == -1) {
-            return TextComponent.of("(permanent)").color(TextColor.DARK_RED);
+            return Component.text("(permanent)").color(COLOR_RED);
         } else if (start - end >= 0) {
-            return TextComponent.of("(kick)").color(TextColor.AQUA);
+            return Component.text("(kick)").color(COLOR_DARK_GREEN);
         } else {
             long duration = end - start;
             if (duration / (60 * 60 * 24) > 0) {
-                return TextComponent.of("§c(" + ((int) duration / (60 * 60 * 24)) + "d)").color(TextColor.RED);
+                return Component.text("§c(" + ((int) duration / (60 * 60 * 24)) + "d)").color(COLOR_RED);
             } else if (duration / (60 * 60) > 0) {
-                return TextComponent.of("§c(" + ((int) duration / (60 * 60)) + "h)").color(TextColor.RED);
+                return Component.text("§c(" + ((int) duration / (60 * 60)) + "h)").color(COLOR_RED);
             } else if (duration / 60 > 0) {
-                return TextComponent.of("§c(" + ((int) duration / 60) + "m)").color(TextColor.RED);
+                return Component.text("§c(" + ((int) duration / 60) + "m)").color(COLOR_RED);
             } else {
-                return TextComponent.of("§c(" + duration + "s)");
+                return Component.text("§c(" + duration + "s)");
             }
         }
 

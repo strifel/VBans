@@ -23,6 +23,7 @@ public class DatabaseConnection {
     private static final String PURGE_BAN = "UPDATE ban_bans SET purged=? WHERE user = ? AND id=?";
     private static final String REDUCE_BANS = "UPDATE ban_bans SET reducedUntil=?, reducedBy=?, reducedAt=? WHERE " + BANED_CRITERIA + " AND user=?";
     private static final String GET_USERNAMES_BASE = "SELECT username FROM ban_bans INNER JOIN ban_nameCache ON ban_bans.user = ban_nameCache.user WHERE GROUP BY username";
+    private static final String GET_BAN_COUNT = "SELECT count(*) FROM ban_bans WHERE " + BANED_CRITERIA;
 
     public DatabaseConnection(String server, int port, String username, String password, String database) throws ClassNotFoundException, SQLException {
         synchronized (this) {
@@ -152,5 +153,14 @@ public class DatabaseConnection {
             } while (results.next());
         }
         return usernames;
+    }
+
+    public int getBannedCount() throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(GET_BAN);
+        statement.setLong(1, System.currentTimeMillis() / 1000);
+        statement.setLong(2, System.currentTimeMillis() / 1000);
+        ResultSet resultSet = statement.executeQuery();
+        resultSet.next();
+        return resultSet.getInt(0);
     }
 }

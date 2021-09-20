@@ -1,6 +1,7 @@
 package de.strifel.vbans;
 
 import com.moandjiezana.toml.Toml;
+import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.event.ResultedEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.LoginEvent;
@@ -11,9 +12,8 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import de.strifel.vbans.commands.*;
 import de.strifel.vbans.database.Ban;
 import de.strifel.vbans.database.DatabaseConnection;
-import net.luckperms.api.LuckPerms;
-import net.luckperms.api.LuckPermsProvider;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.bstats.charts.SingleLineChart;
+import org.bstats.velocity.Metrics;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -25,14 +25,15 @@ import java.nio.file.Path;
 import java.sql.SQLException;
 
 
-@Plugin(id = "vbans", name = "VBans", version = "1.0-SNAPSHOT", description = "Ban players! Its fun!")
+@Plugin(id = "vbans", name = "VBans", version = "1.1-SNAPSHOT", description = "Ban players! Its fun!")
 public class VBans {
 
     private final ProxyServer server;
     private DatabaseConnection databaseConnection;
     private Toml messages;
     private Toml config;
-    LuckPerms luckPermsApi;
+    private final Metrics.Factory metricsFactory;
+    Object luckPermsApi;
 
 
     private Toml loadConfig(Path path) {
@@ -60,11 +61,15 @@ public class VBans {
 
 
     @Inject
-    public VBans(ProxyServer server, Logger logger, @DataDirectory final Path folder) {
+    public VBans(ProxyServer server, Logger logger, @DataDirectory final Path folder, Metrics.Factory metricsFactory) {
         this.server = server;
         config = loadConfig(folder);
         messages = config.getTable("Messages");
         Util.BAN_TEMPLATE = messages.getString("BanLayout");
+
+        this.metricsFactory = metricsFactory;
+        logger.info("VBans uses bStats to anonymously collect stats like the count of banned players. " +
+                "Make sure to deactivate it if you dont want it to.");
     }
 
     @Subscribe
@@ -76,20 +81,29 @@ public class VBans {
             databaseConnection = new DatabaseConnection(database.getString("host"), Integer.parseInt(database.getLong("port").toString()), database.getString("username"), database.getString("password"), database.getString("database"));
         } catch (ClassNotFoundException e) {
             System.err.println("It seems like you do not have JDBC installed. Can not communicate with database");
+            return;
         } catch (SQLException e) {
             System.err.println("An error occoured while connecting to MySQL: " + e.getMessage());
+            return;
         }
         boolean isGCommand = config.getTable("Options").getBoolean("changeToGCommands");
         // Register commands
-        server.getCommandManager().register(new CommandKick(this), isGCommand ? "gkick" : "kick", "vkick");
-        server.getCommandManager().register(new CommandBan(this), isGCommand ? "gban" : "ban", "vban");
-        server.getCommandManager().register(new CommandTempBan(this), "tban", isGCommand ? "gtempban" : "tempban", "vtempban", "vtban");
-        server.getCommandManager().register(new CommandPurgeBan(this), "pban", "vpurgeban", "purgeban", "delban");
-        server.getCommandManager().register(new CommandReduce(this), "reduceBan", "rban", isGCommand ? "gunban" : "unban", isGCommand ? "gpardon" : "pardon");
-        server.getCommandManager().register(new CommandBanHistory(this), isGCommand ? "gbanhistory" : "banhistory", "bhistory", "bhist", "banh");
+        server.getCommandManager().register(isGCommand ? "gkick" : "kick", new CommandKick(this), "vkick");
+        server.getCommandManager().register(isGCommand ? "gban" : "ban", new CommandBan(this), "vban");
+        server.getCommandManager().register("tban", new CommandTempBan(this),isGCommand ? "gtempban" : "tempban", "vtempban", "vtban");
+        server.getCommandManager().register("pban", new CommandPurgeBan(this), "vpurgeban", "purgeban", "delban");
+        server.getCommandManager().register("reduceBan", new CommandReduce(this), "rban", isGCommand ? "gunban" : "unban", isGCommand ? "gpardon" : "pardon");
+        server.getCommandManager().register(isGCommand ? "gbanhistory" : "banhistory", new CommandBanHistory(this), "bhistory", "bhist", "banh");
         // Luck Perms support
         if (server.getPluginManager().isLoaded("luckperms"))
-            luckPermsApi = LuckPermsProvider.get();
+            try {
+                luckPermsApi = net.luckperms.api.LuckPermsProvider.get();
+            } catch (NoClassDefFoundError e) {
+                System.out.println("Luck perms is not installed. VBans will not use it to determine offline permissions.");
+            }
+        // bStats
+        Metrics metrics = metricsFactory.make(this, 11543);
+        metrics.addCustomChart(new SingleLineChart("banned_users", () -> databaseConnection.getBannedCount()));
     }
 
     @Subscribe
