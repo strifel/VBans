@@ -1,17 +1,14 @@
 package de.strifel.vbans.commands;
 
-import com.velocitypowered.api.command.Command;
 import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import de.strifel.vbans.Util;
 import de.strifel.vbans.VBans;
 import de.strifel.vbans.database.DatabaseConnection;
-import net.kyori.text.TextComponent;
-import net.kyori.text.format.TextColor;
-import net.kyori.text.format.TextDecoration;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import net.kyori.adventure.text.Component;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -19,7 +16,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public class CommandKick implements Command {
+import static de.strifel.vbans.Util.COLOR_RED;
+import static de.strifel.vbans.Util.COLOR_YELLOW;
+
+public class CommandKick implements SimpleCommand {
     private final ProxyServer server;
     private final DatabaseConnection database;
     private final String DEFAULT_REASON;
@@ -32,8 +32,11 @@ public class CommandKick implements Command {
         KICK_LAYOUT = vbans.getMessages().getString("KickLayout");
     }
 
+    @Override
+    public void execute(Invocation commandInvocation) {
+        String[] strings = commandInvocation.arguments();
+        CommandSource commandSource = commandInvocation.source();
 
-    public void execute(CommandSource commandSource, @NonNull String[] strings) {
         if (strings.length > 0) {
             Optional<Player> oPlayer = server.getPlayer(strings[0]);
             if (oPlayer.isPresent()) {
@@ -43,33 +46,35 @@ public class CommandKick implements Command {
                     if (strings.length > 1 && commandSource.hasPermission("VBans.kick.reason")) {
                         reason = String.join(" ", Arrays.copyOfRange(strings, 1, strings.length));
                     }
-                    player.disconnect(TextComponent.of(KICK_LAYOUT.replace("$reason", reason)));
+                    player.disconnect(Component.text(KICK_LAYOUT.replace("$reason", reason)));
                     try {
                         database.addBan(player.getUniqueId().toString(), System.currentTimeMillis() / 1000, commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUniqueId().toString(), reason);
                     } catch (SQLException e) {
                         e.printStackTrace();
-                        commandSource.sendMessage(TextComponent.of("Your kick can not be registered.").color(TextColor.RED));
+                        commandSource.sendMessage(Component.text("Your kick can not be registered.").color(COLOR_RED));
                     }
-                    commandSource.sendMessage(TextComponent.of("You kicked " + strings[0]).color(TextColor.YELLOW));
+                    commandSource.sendMessage(Component.text("You kicked " + strings[0]).color(COLOR_YELLOW));
                 } else {
-                    commandSource.sendMessage(TextComponent.of("You are not allowed to kick this player!").color(TextColor.RED));
+                    commandSource.sendMessage(Component.text("You are not allowed to kick this player!").color(COLOR_RED));
                 }
             } else {
-                commandSource.sendMessage(TextComponent.of("Player not found!").color(TextColor.RED));
+                commandSource.sendMessage(Component.text("Player not found!").color(COLOR_RED));
             }
         } else {
-            commandSource.sendMessage(TextComponent.of("Usage: /kick <player> [reason]").color(TextColor.RED));
+            commandSource.sendMessage(Component.text("Usage: /kick <player> [reason]").color(COLOR_RED));
         }
     }
 
-    public List<String> suggest(CommandSource source, @NonNull String[] currentArgs) {
-        if (currentArgs.length == 1) {
+    @Override
+    public List<String> suggest(Invocation commandInvocation) {
+        if (commandInvocation.arguments().length == 1) {
             return Util.getAllPlayernames(server);
         }
         return new ArrayList<String>();
     }
 
-    public boolean hasPermission(CommandSource source, @NonNull String[] args) {
-        return source.hasPermission("VBans.kick");
+    @Override
+    public boolean hasPermission(Invocation commandInvocation) {
+        return commandInvocation.source().hasPermission("VBans.kick");
     }
 }
