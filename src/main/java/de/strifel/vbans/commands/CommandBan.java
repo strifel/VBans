@@ -26,6 +26,7 @@ public class CommandBan implements SimpleCommand {
     private final VBans vBans;
     private final String DEFAULT_REASON;
     private final String BANNED_BROADCAST;
+    private final String END_OF_HIS_LIFE;
 
     public CommandBan(VBans vBans) {
         this.server = vBans.getServer();
@@ -33,6 +34,11 @@ public class CommandBan implements SimpleCommand {
         this.vBans = vBans;
         DEFAULT_REASON = vBans.getMessages().getString("StandardBanMessage");
         BANNED_BROADCAST = vBans.getMessages().getString("BannedBroadcast");
+        if (vBans.getMessages().getString("EndOfHisLife")==null) {
+            END_OF_HIS_LIFE="";
+        } else {
+            END_OF_HIS_LIFE=vBans.getMessages().getString("EndOfHisLife");
+        }
     }
 
     @Override
@@ -61,7 +67,7 @@ public class CommandBan implements SimpleCommand {
                     Util.broadcastMessage(BANNED_BROADCAST
                                     .replace("$bannedBy", commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUsername())
                                     .replace("$player", strings[0])
-                                    .replace("$bannedUntil", "the end of his life")
+                                    .replace("$bannedUntil", END_OF_HIS_LIFE)
                                     .replace("$reason", reason)
                             , "VBans.bannedBroadcast", server);
                 } else {
@@ -84,11 +90,11 @@ public class CommandBan implements SimpleCommand {
                                 Util.broadcastMessage(BANNED_BROADCAST
                                         .replace("$bannedBy", commandSource instanceof ConsoleCommandSource ? "Console" : ((Player) commandSource).getUsername())
                                         .replace("$player", strings[0])
-                                        .replace("$bannedUntil", "the end of his life")
+                                        .replace("$bannedUntil", END_OF_HIS_LIFE)
                                         .replace("$reason", reason)
                                 , "VBans.bannedBroadcast", server);
                             } else {
-                                commandSource.sendMessage(Component.text(strings[0] + " is already banned until " + (currentBan.getUntil() == -1 ? "the end of his life." : Util.UNBAN_DATE_FORMAT.format(currentBan.getUntil() * 1000))).color(COLOR_RED));
+                                commandSource.sendMessage(Component.text(strings[0] + " is already banned until " + (currentBan.getUntil() == -1 ? END_OF_HIS_LIFE : Util.UNBAN_DATE_FORMAT.format(currentBan.getUntil() * 1000))).color(COLOR_RED));
                             }
                         } else {
                             commandSource.sendMessage(Component.text("You are not allowed to ban this player!").color(COLOR_RED));
