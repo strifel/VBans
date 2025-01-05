@@ -24,6 +24,7 @@ public class CommandTempBan implements SimpleCommand {
     private final DatabaseConnection database;
     private final VBans vBans;
     private final String DEFAULT_REASON;
+    private final String END_OF_HIS_LIFE;
     private final String BANNED_BROADCAST;
 
     public CommandTempBan(VBans vBans) {
@@ -32,6 +33,7 @@ public class CommandTempBan implements SimpleCommand {
         this.vBans = vBans;
         this.DEFAULT_REASON = vBans.getMessages().getString("StandardBanMessage");
         this.BANNED_BROADCAST = vBans.getMessages().getString("BannedBroadcast");
+        this.END_OF_HIS_LIFE = vBans.getMessages().getString("EndOfHisLife", "the end of their life.");
     }
 
     public void execute(Invocation commandInvocation) {
@@ -88,7 +90,7 @@ public class CommandTempBan implements SimpleCommand {
                                                 .replace("$reason", reason)
                                         , "VBans.bannedBroadcast", server);
                             } else {
-                                commandSource.sendMessage(Component.text(strings[0] + " is already banned until " + (currentBan.getUntil() == -1 ? "the end of his life." : Util.UNBAN_DATE_FORMAT.format(currentBan.getUntil() * 1000))).color(COLOR_RED));
+                                commandSource.sendMessage(Component.text(strings[0] + " is already banned until " + (currentBan.getUntil() == -1 ? END_OF_HIS_LIFE+"." : Util.UNBAN_DATE_FORMAT.format(currentBan.getUntil() * 1000))).color(COLOR_RED));
                             }
                         } else {
                             commandSource.sendMessage(Component.text("You are not allowed to ban this player!").color(COLOR_RED));

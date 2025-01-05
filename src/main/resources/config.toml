@@ -10,5 +10,6 @@ StandardKickMessage="Kicked by an operator!"
 BanLayout="§4§lBANNED:§r\n§aUntil: $bannedUntil§r\n§3Reason: §r§b$reason§r\n§cBanned by: $bannedBy§r"
 KickLayout="§4§lYou got kicked:\n §r$reason"
 BannedBroadcast="$bannedBy banned $player until $bannedUntil for $reason"
+EndOfHisLife="the end of their life."
 [Options]
 changeToGCommands=false
