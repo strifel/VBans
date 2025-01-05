@@ -46,8 +46,8 @@ SELECT username AS "Banned User",
        (until = -1 
               || until > Unix_timestamp()) AS "Still banned" 
 FROM   ban_bans, 
-       ban_namecache 
-WHERE  ban_bans.user = ban_namecache.user 
+       ban_nameCache 
+WHERE  ban_bans.user = ban_nameCache.user 
 AND    purged IS NULL;
 ```
 ## End
