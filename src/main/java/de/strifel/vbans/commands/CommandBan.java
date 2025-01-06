@@ -34,11 +34,7 @@ public class CommandBan implements SimpleCommand {
         this.vBans = vBans;
         DEFAULT_REASON = vBans.getMessages().getString("StandardBanMessage");
         BANNED_BROADCAST = vBans.getMessages().getString("BannedBroadcast");
-        if (vBans.getMessages().getString("EndOfHisLife")==null) {
-            END_OF_HIS_LIFE="";
-        } else {
-            END_OF_HIS_LIFE=vBans.getMessages().getString("EndOfHisLife");
-        }
+        END_OF_HIS_LIFE=vBans.getMessages().getString("EndOfHisLife", "the end of their life.");
     }
 
     @Override
