@@ -33,11 +33,7 @@ public class CommandTempBan implements SimpleCommand {
         this.vBans = vBans;
         this.DEFAULT_REASON = vBans.getMessages().getString("StandardBanMessage");
         this.BANNED_BROADCAST = vBans.getMessages().getString("BannedBroadcast");
-        if (vBans.getMessages().getString("EndOfHisLife")==null) {
-            END_OF_HIS_LIFE="";
-        } else {
-            END_OF_HIS_LIFE=vBans.getMessages().getString("EndOfHisLife");
-        }
+        this.END_OF_HIS_LIFE=vBans.getMessages().getString("EndOfHisLife", "the end of their life.");
     }
 
     public void execute(Invocation commandInvocation) {
